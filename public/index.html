@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SecureVault</title>
+<style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#000;--bg2:rgba(255,255,255,.045);--bg3:rgba(0,212,255,.06);--bg4:rgba(255,255,255,.03);
+  --text:#eef2ff;--text2:rgba(255,255,255,.42);--accent:#00d4ff;--accent2:#8b5cf6;
+  --green:#34d399;--red:#fb7185;--orange:#fbbf24;--yellow:#fbbf24;
+  --border:rgba(255,255,255,.09);--card:rgba(255,255,255,.045);--hover:rgba(255,255,255,.07);
+}
+html,body{height:100%;font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:13px;overflow:hidden;line-height:1.5;
+  background-image:radial-gradient(1000px 500px at 85% -10%,rgba(0,140,255,.14),transparent 60%),radial-gradient(800px 400px at -10% 110%,rgba(139,92,246,.10),transparent 60%);}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);
+  background-size:56px 56px;mask-image:radial-gradient(ellipse at center,black 20%,transparent 75%);-webkit-mask-image:radial-gradient(ellipse at center,black 20%,transparent 75%);}
+.bg-layer{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none}
+.orb{position:absolute;border-radius:50%;filter:blur(90px);opacity:.22;animation:drift 26s ease-in-out infinite}
+.orb-1{width:520px;height:520px;background:#00d4ff;top:-160px;left:20%}
+.orb-2{width:460px;height:460px;background:#3b82f6;bottom:-140px;right:5%}
+.orb-3{width:380px;height:380px;background:#8b5cf6;top:40%;left:-120px;animation-delay:-8s}
+@keyframes drift{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(50px,-30px) scale(1.08)}66%{transform:translate(-30px,40px) scale(.94)}}
+
+/* login screen */
+#login-screen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:1000;
+  background-image:radial-gradient(1000px 500px at 85% -10%,rgba(0,140,255,.14),transparent 60%),radial-gradient(800px 400px at -10% 110%,rgba(139,92,246,.10),transparent 60%);}
+.login-box{background:var(--card);backdrop-filter:blur(50px) saturate(1.4);-webkit-backdrop-filter:blur(50px) saturate(1.4);border:1px solid var(--border);border-radius:22px;padding:40px;width:380px;text-align:center;box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 8px 30px rgba(0,0,0,.35);position:relative;z-index:1}
+.login-box h1{font-size:24px;margin-bottom:4px;color:var(--accent);font-weight:800;letter-spacing:1px}
+.login-box .sub{color:var(--text2);font-size:11px;margin-bottom:24px;text-transform:uppercase;letter-spacing:1px}
+.login-box input{width:100%;padding:12px 16px;background:rgba(255,255,255,.045);border:1px solid var(--border);border-radius:12px;color:var(--text);font-size:14px;margin-bottom:12px;outline:none;transition:all .3s;font-family:'JetBrains Mono',monospace}
+.login-box input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,212,255,.12)}
+.login-box button{width:100%;padding:12px;background:linear-gradient(135deg,#00d4ff,#3b82f6 60%,#8b5cf6);color:#fff;border:none;border-radius:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;font-size:13px;transition:all .3s}
+.login-box button:hover{box-shadow:0 0 26px rgba(0,180,255,.5);transform:translateY(-1px)}
+.login-box .err{color:var(--red);font-size:12px;margin-top:8px;min-height:16px}
+
+/* main layout */
+#app{display:none;height:100vh;flex-direction:column;position:relative;z-index:1}
+.topbar{background:rgba(255,255,255,.045);backdrop-filter:blur(50px) saturate(1.4);-webkit-backdrop-filter:blur(50px) saturate(1.4);border-bottom:1px solid var(--border);padding:8px 12px;display:flex;align-items:center;gap:12px}
+.topbar .logo{font-weight:800;font-size:15px;color:var(--accent);letter-spacing:2px}
+.topbar .spacer{flex:1}
+.topbar .status{font-size:11px;color:var(--text2)}
+
+/* tabs */
+.tabs{background:rgba(255,255,255,.03);border-bottom:1px solid var(--border);display:flex;padding:0 12px;gap:2px}
+.tab{padding:9px 16px;cursor:pointer;color:var(--text2);border-bottom:2px solid transparent;font-size:12px;transition:.2s;font-weight:600}
+.tab:hover{color:var(--text);background:var(--hover)}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+
+/* toolbar */
+.toolbar{background:rgba(255,255,255,.045);backdrop-filter:blur(50px) saturate(1.4);-webkit-backdrop-filter:blur(50px) saturate(1.4);border-bottom:1px solid var(--border);padding:8px 12px;display:flex;gap:6px;flex-wrap:wrap}
+.btn{padding:7px 14px;border:1px solid var(--border);border-radius:12px;background:rgba(255,255,255,.045);color:var(--text);cursor:pointer;font-size:12px;display:flex;align-items:center;gap:5px;transition:.2s;font-weight:600}
+.btn:hover{background:var(--hover);border-color:var(--accent);box-shadow:0 0 12px rgba(0,180,255,.15)}
+.btn-primary{background:linear-gradient(135deg,#00d4ff,#3b82f6 60%,#8b5cf6);color:#fff;border-color:transparent}
+.btn-primary:hover{box-shadow:0 0 20px rgba(0,180,255,.4)}
+.btn-danger{border-color:rgba(251,113,133,.5);color:var(--red)}
+.btn-danger:hover{background:rgba(251,113,133,.15);color:var(--red);border-color:var(--red)}
+.btn svg{width:14px;height:14px;fill:currentColor}
+
+/* content */
+.content{flex:1;overflow:auto;padding:14px}
+.page{display:none}
+.page.active{display:block}
+
+/* volume list */
+.vol-table{width:100%;border-collapse:collapse}
+.vol-table th{text-align:left;padding:9px 10px;background:rgba(255,255,255,.03);color:var(--text2);font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid var(--border)}
+.vol-table td{padding:9px 10px;border-bottom:1px solid rgba(255,255,255,.05);font-size:12px}
+.vol-table tr:hover td{background:var(--hover)}
+.badge{display:inline-block;padding:3px 10px;border-radius:999px;font-size:10px;font-weight:700}
+.badge-green{background:rgba(52,211,153,.14);color:var(--green);border:1px solid rgba(52,211,153,.3)}
+.badge-blue{background:rgba(0,212,255,.14);color:var(--accent);border:1px solid rgba(0,212,255,.3)}
+.badge-orange{background:rgba(251,191,36,.14);color:var(--orange);border:1px solid rgba(251,191,36,.3)}
+.badge-red{background:rgba(251,113,133,.14);color:var(--red);border:1px solid rgba(251,113,133,.3)}
+
+/* stat cards */
+.stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-bottom:16px}
+.stat-card{background:var(--card);backdrop-filter:blur(50px) saturate(1.4);-webkit-backdrop-filter:blur(50px) saturate(1.4);border:1px solid var(--border);border-radius:22px;padding:16px;box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 8px 30px rgba(0,0,0,.35);transition:all .3s}
+.stat-card:hover{border-color:rgba(0,212,255,.4);box-shadow:0 0 0 1px rgba(0,212,255,.25),0 0 30px rgba(0,212,255,.12)}
+.stat-card .label{font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:1px;font-weight:600}
+.stat-card .value{font-size:22px;font-weight:800;color:var(--accent);margin-top:4px}
+
+/* form */
+.form-group{margin-bottom:12px}
+.form-group label{display:block;font-size:10px;color:var(--text2);margin-bottom:5px;text-transform:uppercase;letter-spacing:1px;font-weight:600}
+.form-group input,.form-group select{width:100%;padding:9px 11px;background:rgba(255,255,255,.045);border:1px solid var(--border);border-radius:12px;color:var(--text);font-size:13px;outline:none;transition:all .25s}
+.form-group input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,212,255,.12)}
+
+/* modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:500;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.modal-overlay.show{display:flex}
+.modal{background:rgba(10,14,24,.92);backdrop-filter:blur(50px) saturate(1.4);-webkit-backdrop-filter:blur(50px) saturate(1.4);border:1px solid var(--border);border-radius:22px;padding:24px;width:420px;max-height:80vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.modal h3{margin-bottom:16px;color:var(--accent);font-weight:800}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+
+/* toast */
+.toast{position:fixed;bottom:20px;right:20px;padding:12px 18px;border-radius:14px;font-size:12px;z-index:600;animation:slideIn .3s;font-weight:600;box-shadow:0 8px 30px rgba(0,0,0,.4)}
+.toast-success{background:rgba(52,211,153,.9);color:#000}
+.toast-error{background:rgba(251,113,133,.9);color:#fff}
+@keyframes slideIn{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+
+/* scrollbar */
+::-webkit-scrollbar{width:8px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(0,212,255,.3);border-radius:4px;box-shadow:0 0 6px rgba(0,212,255,.3)}
+::-webkit-scrollbar-thumb:hover{background:var(--accent2)}
+
+/* empty state */
+.empty{text-align:center;padding:40px;color:var(--text2)}
+.empty svg{width:48px;height:48px;fill:var(--border);margin-bottom:12px}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="bg-layer"><div class="orb orb-1"></div><div class="orb orb-2"></div><div class="orb orb-3"></div></div>
+
+<div id="login-screen">
+  <div class="login-box">
+    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#00d4ff" stroke-width="1.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/><circle cx="12" cy="16" r="1"/></svg>
+    <h1>SecureVault</h1>
+    <div class="sub">AES-256-GCM & ChaCha20-Poly1305 Encryption Suite</div>
+    <input type="password" id="login-pw" placeholder="Enter password" autofocus>
+    <button onclick="doLogin()">Unlock</button>
+    <div class="err" id="login-err"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="topbar">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00d4ff" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+    <span class="logo">SECUREVAULT</span>
+    <span class="spacer"></span>
+    <span class="status" id="topbar-status">Ready</span>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="showTab(0)">Volumes</div>
+    <div class="tab" onclick="showTab(1)">Files</div>
+    <div class="tab" onclick="showTab(2)">Drives</div>
+    <div class="tab" onclick="showTab(3)">Passwords</div>
+    <div class="tab" onclick="showTab(4)">Shredder</div>
+  </div>
+
+  <div class="toolbar" id="toolbar"></div>
+
+  <div class="content">
+    <!-- VOLUMES PAGE -->
+    <div class="page active" id="page-0">
+      <div class="stats" id="vol-stats"></div>
+      <table class="vol-table">
+        <thead><tr><th>Volume</th><th>Algorithm</th><th>Size</th><th>Status</th><th></th></tr></thead>
+        <tbody id="vol-list"></tbody>
+      </table>
+      <div class="empty" id="vol-empty" style="display:none">
+        <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/><path d="M12 6l-4 4h3v4h2v-4h3z"/></svg>
+        <div>No volumes created yet</div>
+      </div>
+    </div>
+
+    <!-- FILES PAGE -->
+    <div class="page" id="page-1">
+      <table class="vol-table">
+        <thead><tr><th>File</th><th>Original Size</th><th>Encrypted Size</th><th>Date</th><th></th></tr></thead>
+        <tbody id="file-list"></tbody>
+      </table>
+      <div class="empty" id="file-empty" style="display:none">
+        <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg>
+        <div>No encrypted files</div>
+      </div>
+    </div>
+
+    <!-- DRIVES PAGE -->
+    <div class="page" id="page-2">
+      <table class="vol-table">
+        <thead><tr><th>Drive</th><th>Name</th><th>Filesystem</th><th>Size</th><th>Free</th><th>Type</th></tr></thead>
+        <tbody id="drive-list"></tbody>
+      </table>
+    </div>
+
+    <!-- PASSWORDS PAGE -->
+    <div class="page" id="page-3">
+      <div class="stats" id="pw-stats"></div>
+      <table class="vol-table">
+        <thead><tr><th>Title</th><th>Username</th><th>Category</th><th></th></tr></thead>
+        <tbody id="pw-list"></tbody>
+      </table>
+      <div class="empty" id="pw-empty" style="display:none">
+        <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg>
+        <div>No passwords stored</div>
+      </div>
+    </div>
+
+    <!-- SHREDDER PAGE -->
+    <div class="page" id="page-4">
+      <p style="color:var(--text2);margin-bottom:16px">Securely destroy files beyond recovery. Uses multi-pass overwrite patterns.</p>
+    </div>
+  </div>
+</div>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal" id="modal-content"></div>
+</div>
+
+<script>
+var token = '';
+var currentPage = 0;
+var masterPw = '';
+
+function api(url, opts) {
+  opts = opts || {};
+  var headers = opts.headers || {};
+  headers['Authorization'] = 'Bearer ' + token;
+  headers['Content-Type'] = 'application/json';
+  opts.headers = headers;
+  return fetch(url, opts).then(function(r) { return r.json(); });
+}
+
+function toast(msg, type) {
+  var el = document.createElement('div');
+  el.className = 'toast toast-' + type;
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(function() { el.remove(); }, 3000);
+}
+
+function showModal(html) {
+  document.getElementById('modal-content').innerHTML = html;
+  document.getElementById('modal-overlay').classList.add('show');
+}
+function hideModal() { document.getElementById('modal-overlay').classList.remove('show'); }
+
+// AUTH
+function doLogin() {
+  var pw = document.getElementById('login-pw').value;
+  api('/api/auth/status').then(function(s) {
+    if (!s.configured) {
+      api('/api/auth/setup', { method: 'POST', body: JSON.stringify({ password: pw }) }).then(function(r) {
+        if (r.success) { token = r.token; startApp(); }
+        else document.getElementById('login-err').textContent = r.error;
+      });
+    } else {
+      api('/api/auth/login', { method: 'POST', body: JSON.stringify({ password: pw }) }).then(function(r) {
+        if (r.success) { token = r.token; startApp(); }
+        else document.getElementById('login-err').textContent = r.error;
+      });
+    }
+  });
+}
+document.getElementById('login-pw').addEventListener('keydown', function(e) { if (e.key === 'Enter') doLogin(); });
+
+function startApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  showTab(0);
+}
+
+// TABS
+var tabs = ['Volumes', 'Files', 'Drives', 'Passwords', 'Shredder'];
+var toolbars = [
+  [{ label: 'Create Volume', cls: 'btn-primary', fn: 'createVolume' }, { label: 'Mount', fn: 'mountVol' }, { label: 'Dismount All', fn: 'dismountAll' }, { label: 'Detect Drives', fn: 'detectDrives' }],
+  [{ label: 'Encrypt File', cls: 'btn-primary', fn: 'encryptFile' }, { label: 'Decrypt File', fn: 'decryptFile' }],
+  [{ label: 'Refresh', fn: 'loadDrives' }],
+  [{ label: 'Add Password', cls: 'btn-primary', fn: 'addPassword' }, { label: 'Generate Password', fn: 'genPassword' }],
+  [{ label: 'Shred File', cls: 'btn-danger', fn: 'shredFile' }]
+];
+
+function showTab(idx) {
+  currentPage = idx;
+  document.querySelectorAll('.tab').forEach(function(t, i) { t.classList.toggle('active', i === idx); });
+  document.querySelectorAll('.page').forEach(function(p, i) { p.classList.toggle('active', i === idx); });
+  // toolbar
+  var tb = document.getElementById('toolbar');
+  tb.innerHTML = '';
+  toolbars[idx].forEach(function(b) {
+    var btn = document.createElement('button');
+    btn.className = 'btn ' + (b.cls || '');
+    btn.textContent = b.label;
+    btn.onclick = window[b.fn];
+    tb.appendChild(btn);
+  });
+  // load data
+  if (idx === 0) loadVolumes();
+  if (idx === 1) loadFiles();
+  if (idx === 2) loadDrives();
+  if (idx === 3) loadPasswords();
+}
+
+// VOLUMES
+function loadVolumes() {
+  api('/api/stats').then(function(s) {
+    document.getElementById('vol-stats').innerHTML =
+      '<div class="stat-card"><div class="label">Volumes</div><div class="value">' + s.volumes + '</div></div>' +
+      '<div class="stat-card"><div class="label">Mounted</div><div class="value">' + s.mounted + '</div></div>' +
+      '<div class="stat-card"><div class="label">Files</div><div class="value">' + s.files.fileCount + '</div></div>' +
+      '<div class="stat-card"><div class="label">Passwords</div><div class="value">' + s.passwords.totalPasswords + '</div></div>';
+  });
+  api('/api/volumes').then(function(r) {
+    var list = document.getElementById('vol-list');
+    var empty = document.getElementById('vol-empty');
+    if (!r.volumes || r.volumes.length === 0) { list.innerHTML = ''; empty.style.display = ''; return; }
+    empty.style.display = 'none';
+    list.innerHTML = r.volumes.map(function(v) {
+      var sz = v.size < 1048576 ? (v.size/1024).toFixed(0)+' KB' : v.size < 1073741824 ? (v.size/1048576).toFixed(0)+' MB' : (v.size/1073741824).toFixed(1)+' GB';
+      var status = v.exists ? '<span class="badge badge-green">OK</span>' : '<span class="badge badge-red">Missing</span>';
+      return '<tr><td>' + v.path.split('\\').pop() + '</td><td>' + (v.algorithmName||'?') + '</td><td>' + sz + '</td><td>' + status + '</td>' +
+        '<td><button class="btn" onclick="mountVolAt(\'' + v.path.replace(/\\/g,'\\\\') + '\')">Mount</button> ' +
+        '<button class="btn btn-danger" onclick="deleteVol(\'' + v.path.replace(/\\/g,'\\\\') + '\')">Delete</button></td></tr>';
+    }).join('');
+  });
+}
+
+function createVolume() {
+  showModal('<h3>Create Encrypted Volume</h3>' +
+    '<div class="form-group"><label>File Path</label><input id="m-vol-path" placeholder="C:\\vault.svol"></div>' +
+    '<div class="form-group"><label>Size (MB)</label><input id="m-vol-size" type="number" value="100"></div>' +
+    '<div class="form-group"><label>Password</label><input id="m-vol-pw" type="password"></div>' +
+    '<div class="form-group"><label>Algorithm</label><select id="m-vol-algo"><option value="0">AES-256-GCM</option><option value="1">ChaCha20-Poly1305</option><option value="2">AES->ChaCha</option><option value="3">ChaCha->AES</option></select></div>' +
+    '<div class="modal-actions"><button class="btn" onclick="hideModal()">Cancel</button><button class="btn btn-primary" onclick="doCreateVol()">Create</button></div>');
+}
+
+function doCreateVol() {
+  var p = document.getElementById('m-vol-path').value;
+  var sz = document.getElementById('m-vol-size').value;
+  var pw = document.getElementById('m-vol-pw').value;
+  var algo = document.getElementById('m-vol-algo').value;
+  if (!p || !sz || !pw) return toast('Fill all fields', 'error');
+  hideModal();
+  api('/api/volumes/create', { method: 'POST', body: JSON.stringify({ filePath: p, password: pw, sizeMB: sz, algorithm: algo }) })
+    .then(function(r) { if (r.success) { toast('Volume created', 'success'); loadVolumes(); } else toast(r.error, 'error'); });
+}
+
+function mountVol() {
+  showModal('<h3>Mount Volume</h3>' +
+    '<div class="form-group"><label>Volume File</label><input id="m-mount-path" placeholder="C:\\vault.svol"></div>' +
+    '<div class="form-group"><label>Password</label><input id="m-mount-pw" type="password"></div>' +
+    '<div class="modal-actions"><button class="btn" onclick="hideModal()">Cancel</button><button class="btn btn-primary" onclick="doMount()">Mount</button></div>');
+}
+
+function mountVolAt(p) {
+  showModal('<h3>Mount Volume</h3>' +
+    '<div class="form-group"><label>Volume File</label><input id="m-mount-path" value="' + p + '"></div>' +
+    '<div class="form-group"><label>Password</label><input id="m-mount-pw" type="password"></div>' +
+    '<div class="modal-actions"><button class="btn" onclick="hideModal()">Cancel</button><button class="btn btn-primary" onclick="doMount()">Mount</button></div>');
+}
+
+function doMount() {
+  var p = document.getElementById('m-mount-path').value;
+  var pw = document.getElementById('m-mount-pw').value;
+  if (!p || !pw) return toast('Fill all fields', 'error');
+  hideModal();
+  api('/api/volumes/mount', { method: 'POST', body: JSON.stringify({ volumePath: p, password: pw }) })
+    .then(function(r) { if (r.success) { toast('Mounted at ' + r.driveLetter, 'success'); loadVolumes(); } else toast(r.error, 'error'); });
+}
+
+function dismountAll() {
+  api('/api/volumes/unmount-all', { method: 'POST', body: '{}' })
+    .then(function(r) { toast('Dismounted ' + r.count + ' volume(s)', 'success'); loadVolumes(); });
+}
+
+function deleteVol(p) {
+  if (!confirm('This will permanently shred the volume file. Continue?')) return;
+  api('/api/volumes/delete', { method: 'POST', body: JSON.stringify({ volumePath: p }) })
+    .then(function(r) { if (r.success) { toast('Volume deleted', 'success'); loadVolumes(); } else toast(r.error, 'error'); });
+}
+
+// FILES
+function loadFiles() {
+  api('/api/files').then(function(r) {
+    var list = document.getElementById('file-list');
+    var empty = document.getElementById('file-empty');
+    if (!r.files || r.files.length === 0) { list.innerHTML = ''; empty.style.display = ''; return; }
+    empty.style.display = 'none';
+    list.innerHTML = r.files.map(function(f) {
+      var sz = f.size < 1048576 ? (f.size/1024).toFixed(0)+' KB' : (f.size/1048576).toFixed(1)+' MB';
+      var esz = f.encryptedSize < 1048576 ? (f.encryptedSize/1024).toFixed(0)+' KB' : (f.encryptedSize/1048576).toFixed(1)+' MB';
+      return '<tr><td>' + f.name + '</td><td>' + sz + '</td><td>' + esz + '</td><td>' + f.encryptedAt.split('T')[0] + '</td><td></td></tr>';
+    }).join('');
+  });
+}
+
+function encryptFile() {
+  showModal('<h3>Encrypt File</h3>' +
+    '<div class="form-group"><label>File Path</label><input id="m-enc-path" placeholder="C:\\secret.txt"></div>' +
+    '<div class="form-group"><label>Password</label><input id="m-enc-pw" type="password"></div>' +
+    '<div class="modal-actions"><button class="btn" onclick="hideModal()">Cancel</button><button class="btn btn-primary" onclick="doEncryptFile()">Encrypt</button></div>');
+}
+
+function doEncryptFile() {
+  var p = document.getElementById('m-enc-path').value;
+  var pw = document.getElementById('m-enc-pw').value;
+  if (!p || !pw) return toast('Fill all fields', 'error');
+  hideModal();
+  api('/api/files/encrypt', { method: 'POST', body: JSON.stringify({ filePath: p, password: pw }) })
+    .then(function(r) { if (r.success) { toast('Encrypted: ' + r.encryptedPath, 'success'); loadFiles(); } else toast(r.error, 'error'); });
+}
+
+function decryptFile() {
+  showModal('<h3>Decrypt File</h3>' +
+    '<div class="form-group"><label>Encrypted File</label><input id="m-dec-path" placeholder="C:\\secret.txt.svault"></div>' +
+    '<div class="form-group"><label>Password</label><input id="m-dec-pw" type="password"></div>' +
+    '<div class="modal-actions"><button class="btn" onclick="hideModal()">Cancel</button><button class="btn btn-primary" onclick="doDecryptFile()">Decrypt</button></div>');
+}
+
+function doDecryptFile() {
+  var p = document.getElementById('m-dec-path').value;
+  var pw = document.getElementById('m-dec-pw').value;
+  if (!p || !pw) return toast('Fill all fields', 'error');
+  hideModal();
+  api('/api/files/decrypt', { method: 'POST', body: JSON.stringify({ filePath: p, password: pw }) })
+    .then(function(r) { if (r.success) { toast('Decrypted: ' + r.path, 'success'); } else toast(r.error, 'error'); });
+}
+
+// DRIVES
+function loadDrives() {
+  api('/api/drives').then(function(r) {
+    var list = document.getElementById('drive-list');
+    list.innerHTML = r.drives.map(function(d) {
+      var sz = d.totalSize ? (d.totalSize/1073741824).toFixed(1)+' GB' : '?';
+      var free = d.freeSpace ? (d.freeSpace/1073741824).toFixed(1)+' GB' : '?';
+      var type = d.isRemovable ? '<span class="badge badge-green">Removable</span>' : '<span class="badge badge-blue">' + d.typeLabel + '</span>';
+      return '<tr><td><strong>' + d.letter + '</strong></td><td>' + (d.name || '-') + '</td><td>' + (d.fileSystem || '?') + '</td><td>' + sz + '</td><td>' + free + '</td><td>' + type + '</td></tr>';
+    }).join('');
+  });
+}
+function detectDrives() { loadDrives(); toast('Drives refreshed', 'success'); }
+
+// PASSWORDS
+function loadPasswords() {
+  if (!masterPw) {
+    showModal('<h3>Master Password</h3>' +
+      '<div class="form-group"><label>Enter master password to view passwords</label><input id="m-master-pw" type="password"></div>' +
+      '<div class="modal-actions"><button class="btn" onclick="hideModal()">Cancel</button><button class="btn btn-primary" onclick="setMaster()">Unlock</button></div>');
+    return;
+  }
+  api('/api/passwords/list', { method: 'POST', body: JSON.stringify({ masterPassword: masterPw }) })
+    .then(function(r) {
+      var list = document.getElementById('pw-list');
+      var empty = document.getElementById('pw-empty');
+      if (!r.passwords || r.passwords.length === 0) { list.innerHTML = ''; empty.style.display = ''; return; }
+      empty.style.display = 'none';
+      list.innerHTML = r.passwords.map(function(p) {
+        if (p.error) return '<tr><td colspan="4" style="color:var(--red)">' + p.error + '</td></tr>';
+        return '<tr><td>' + (p.title||'') + '</td><td>' + (p.username||'') + '</td><td>' + (p.category||'') + '</td>' +
+          '<td><button class="btn" onclick="showPwDetail(\'' + p.id + '\')">View</button> ' +
+          '<button class="btn btn-danger" onclick="delPw(\'' + p.id + '\')">Delete</button></td></tr>';
+      }).join('');
+    });
+}
+
+function setMaster() {
+  masterPw = document.getElementById('m-master-pw').value;
+  hideModal();
+  if (masterPw) loadPasswords();
+}
+
+function addPassword() {
+  showModal('<h3>Add Password</h3>' +
+    '<div class="form-group"><label>Title</label><input id="m-pw-title" placeholder="Gmail"></div>' +
+    '<div class="form-group"><label>Username</label><input id="m-pw-user" placeholder="you@gmail.com"></div>' +
+    '<div class="form-group"><label>Password</label><input id="m-pw-pw" type="password"></div>' +
+    '<div class="form-group"><label>URL</label><input id="m-pw-url" placeholder="https://gmail.com"></div>' +
+    '<div class="form-group"><label>Category</label><input id="m-pw-cat" value="General"></div>' +
+    '<div class="modal-actions"><button class="btn" onclick="hideModal()">Cancel</button><button class="btn btn-primary" onclick="doAddPw()">Add</button></div>');
+}
+
+function doAddPw() {
+  var title = document.getElementById('m-pw-title').value;
+  var pw = document.getElementById('m-pw-pw').value;
+  if (!title || !pw) return toast('Title and password required', 'error');
+  hideModal();
+  api('/api/passwords/add', { method: 'POST', body: JSON.stringify({
+    title: title, username: document.getElementById('m-pw-user').value,
+    password: pw, url: document.getElementById('m-pw-url').value,
+    category: document.getElementById('m-pw-cat').value, masterPassword: masterPw
+  })}).then(function(r) { if (r.success) { toast('Password added', 'success'); loadPasswords(); } else toast(r.error, 'error'); });
+}
+
+function showPwDetail(id) {
+  api('/api/passwords/get', { method: 'POST', body: JSON.stringify({ id: id, masterPassword: masterPw }) })
+    .then(function(r) {
+      if (r.error) return toast(r.error, 'error');
+      var e = r.entry;
+      showModal('<h3>' + (e.title||'') + '</h3>' +
+        '<div class="form-group"><label>Username</label><input value="' + (e.username||'') + '" readonly></div>' +
+        '<div class="form-group"><label>Password</label><input value="' + (e.password||'') + '" readonly></div>' +
+        '<div class="form-group"><label>URL</label><input value="' + (e.url||'') + '" readonly></div>' +
+        '<div class="form-group"><label>Category</label><input value="' + (e.category||'') + '" readonly></div>' +
+        (e.notes ? '<div class="form-group"><label>Notes</label><input value="' + e.notes + '" readonly></div>' : '') +
+        '<div class="modal-actions"><button class="btn" onclick="hideModal()">Close</button></div>');
+    });
+}
+
+function delPw(id) {
+  if (!confirm('Delete this password?')) return;
+  api('/api/passwords/delete', { method: 'POST', body: JSON.stringify({ id: id }) })
+    .then(function(r) { if (r.success) { toast('Deleted', 'success'); loadPasswords(); } });
+}
+
+function genPassword() {
+  api('/api/passwords/generate?length=24').then(function(r) {
+    showModal('<h3>Generated Password</h3><div style="background:var(--bg);padding:14px;border-radius:6px;font-family:monospace;font-size:16px;word-break:break-all;margin:12px 0">' + r.password + '</div>' +
+      '<div class="modal-actions"><button class="btn" onclick="hideModal()">Close</button><button class="btn btn-primary" onclick="navigator.clipboard.writeText(\'' + r.password + '\');toast(\'Copied!\',\'success\')">Copy</button></div>');
+  });
+}
+
+// SHREDDER
+function shredFile() {
+  showModal('<h3>Shred File</h3>' +
+    '<div class="form-group"><label>File Path</label><input id="m-shred-path" placeholder="C:\\file.txt"></div>' +
+    '<div class="form-group"><label>Passes</label><input id="m-shred-passes" type="number" value="3"></div>' +
+    '<div class="modal-actions"><button class="btn" onclick="hideModal()">Cancel</button><button class="btn btn-danger" onclick="doShred()">Shred</button></div>');
+}
+
+function doShred() {
+  var p = document.getElementById('m-shred-path').value;
+  var passes = document.getElementById('m-shred-passes').value;
+  if (!p) return toast('File path required', 'error');
+  if (!confirm('This will PERMANENTLY DESTROY the file. Continue?')) return;
+  hideModal();
+  api('/api/shred', { method: 'POST', body: JSON.stringify({ filePath: p, passes: passes }) })
+    .then(function(r) { if (r.success) toast('File shredded', 'success'); else toast(r.error, 'error'); });
+}
+
+function hideModal() { document.getElementById('modal-overlay').classList.remove('show'); }
+</script>
+</body>
+</html>

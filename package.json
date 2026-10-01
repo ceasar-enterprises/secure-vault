@@ -1,0 +1,16 @@
+{
+  "name": "securevault",
+  "version": "2.1.0",
+  "description": "AES-256-GCM & ChaCha20-Poly1305 encryption suite — file encryption, encrypted volumes, hidden volumes, password manager, secure shredder",
+  "main": "index.js",
+  "bin": {
+    "securevault": "./index.js"
+  },
+  "scripts": {
+    "start": "node index.js help",
+    "test": "node _test_gui.js"
+  },
+  "keywords": ["encryption", "aes", "chacha20", "volumes", "security"],
+  "author": "Ceasar Enterprise",
+  "license": "MIT"
+}

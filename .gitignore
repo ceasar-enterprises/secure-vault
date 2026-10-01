@@ -1,0 +1,16 @@
+# Runtime state — created on first run, may contain encrypted volumes and logs
+data/
+
+# Test artifacts produced by running the suite
+test/*.svault
+test/note_back.txt
+test/*.vault
+test/*.key
+
+node_modules/
+npm-debug.log*
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
